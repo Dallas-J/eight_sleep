@@ -34,6 +34,7 @@ class EightUser:  # pylint: disable=too-many-public-methods
         self._user_profile: dict[str, Any] = {}
         self.trends: list[dict[str, Any]] = []
         self.intervals: list[dict[str, Any]] = []
+        self.routines: list[dict[str, Any]] = []
         self.next_alarm = None
         self.next_alarm_id = None
         self.bed_state_type = None
@@ -779,7 +780,7 @@ class EightUser:  # pylint: disable=too-many-public-methods
         await self.device.api_request("PUT", url, data=data)
 
     async def turn_off_side(self):
-        """Turns on the side of the user"""
+        """Turns off the side of the user"""
         url = APP_API_URL + f"v1/users/{self.user_id}/temperature"
         data = {"currentState": {"type": "off"}}
         await self.device.api_request("PUT", url, data=data)
@@ -834,6 +835,11 @@ class EightUser:  # pylint: disable=too-many-public-methods
         resp = await self.device.api_request("GET", url)
 
         try:
+            self.routines = resp["settings"]["routines"]
+        except KeyError:
+            self.routines = []
+
+        try:
             nextTimestamp = resp["state"]["nextAlarm"]["nextTimestamp"]
         except KeyError:
             nextTimestamp = None
@@ -845,6 +851,53 @@ class EightUser:  # pylint: disable=too-many-public-methods
 
         self.next_alarm = self.device.convert_string_to_datetime(nextTimestamp)
         self.next_alarm_id = resp["state"]["nextAlarm"]["alarmId"]
+
+    async def set_routine_alarm(self, routine_id: str, alarm_id: str, alarm_time: str) -> None:
+        """Set an alarm from a routine."""
+        await self.update_routines_data()
+        # Find the original routine
+        original_routine: dict[str, Any] = {}
+        for r in self.routines:
+            try:
+                if r["id"] == routine_id:
+                    original_routine = r
+            except KeyError:
+                pass
+
+        # Update the alarm
+        try:
+            for a in original_routine["alarms"]:
+                if a["alarmId"] == alarm_id:
+                    a["enabledSince"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    a["timeWithOffset"]["time"] = alarm_time
+        except KeyError:
+            pass
+
+        # Push to cloud
+        url = APP_API_URL + f"v2/users/{self.user_id}/routines/{routine_id}"
+        await self.device.api_request("PUT", url, data=original_routine)
+
+    async def set_routine_bedtime(self, routine_id: str, bedtime: str) -> None:
+        """Set an alarm from a routine."""
+        await self.update_routines_data()
+        # Find the original routine
+        original_routine: dict[str, Any] = {}
+        for r in self.routines:
+            try:
+                if r["id"] == routine_id:
+                    original_routine = r
+            except KeyError:
+                pass
+
+        # Update bedtime
+        try:
+            original_routine["bedtime"]["time"] = bedtime
+        except KeyError:
+            pass
+
+        # Push to cloud
+        url = APP_API_URL + f"v2/users/{self.user_id}/routines/{routine_id}"
+        await self.device.api_request("PUT", url, data=original_routine)
 
     def _convert_string_to_datetime(self, datetime_str):
         datetime_str = str(datetime_str).strip()

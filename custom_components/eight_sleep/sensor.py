@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 import logging
 from typing import Any
 
 from .pyEight.eight import EightSleep
 import voluptuous as vol
+import homeassistant.helpers.config_validation as cv
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -197,6 +199,16 @@ async def async_setup_entry(
             "bed_side_state": vol.All(vol.Coerce(str)),
         },
         "async_set_bed_side",
+    )
+    platform.async_register_entity_service(
+        "set_routine_alarm",
+        {"routine_id": vol.All(vol.Coerce(str)), "alarm_id": vol.All(vol.Coerce(str)), "alarm_time": vol.All(vol.Coerce(str))},
+        "async_set_routine_alarm",
+    )
+    platform.async_register_entity_service(
+        "set_routine_bedtime",
+        {"routine_id": vol.All(vol.Coerce(str)), "bedtime": vol.All(vol.Coerce(str))},
+        "async_set_routine_bedtime",
     )
 
 

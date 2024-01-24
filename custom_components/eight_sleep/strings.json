@@ -72,6 +72,14 @@
       "name": "Set Bed Side",
       "description": "Set the bed side for the targeted user. Options are Both, Left, or Right."
 
+    },
+    "set_routine_alarm": {
+      "name": "Set Routine Alarm",
+      "description": "Change the alarm time for the given routine ID and alarm ID."
+    },
+    "set_routine_bedtime": {
+      "name": "Set Routine Bedtime",
+      "description": "Change the bedtime for the given routine ID."
     }
   }
 }

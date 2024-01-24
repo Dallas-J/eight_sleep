@@ -87,6 +87,14 @@
                     "name": "Bed Side State"
                 }
             }
+        },
+        "set_routine_alarm": {
+            "description": "Change the alarm time for the given routine ID and alarm ID.",
+            "name": "Set Routine Alarm"
+        },
+        "set_routine_bedtime": {
+            "description": "Change the bedtime for the given routine ID.",
+            "name": "Set Routine Bedtime"
         }
     }
 }
