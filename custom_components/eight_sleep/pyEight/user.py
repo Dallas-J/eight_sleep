@@ -892,32 +892,10 @@ class EightUser:  # pylint: disable=too-many-public-methods
         # Update bedtime
         try:
             original_routine["bedtime"]["time"] = bedtime
+            original_routine["bedtime"]["dayOffset"] = "MinusOne" if "12:00:00" <= bedtime else "Zero"
         except KeyError:
             pass
 
         # Push to cloud
         url = APP_API_URL + f"v2/users/{self.user_id}/routines/{routine_id}"
         await self.device.api_request("PUT", url, data=original_routine)
-
-    def _convert_string_to_datetime(self, datetime_str):
-        datetime_str = str(datetime_str).strip()
-        # Convert string to datetime object.
-        try:
-            # Try to parse the first format
-            datetime_object = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError:
-            try:
-                # Try to parse the second format
-                datetime_object = datetime.strptime(
-                    datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ"
-                )
-            except ValueError:
-                # Handle if neither format is matched
-                raise ValueError(f"Unsupported date string format for {datetime_str}")
-
-        # Set the timezone to UTC
-        utc_timezone = pytz.UTC
-        datetime_object_utc = datetime_object.replace(tzinfo=utc_timezone)
-        # Set the timezone to a specific timezone
-        timezone = pytz.timezone(self.device.timezone)
-        return datetime_object_utc.astimezone(timezone)
